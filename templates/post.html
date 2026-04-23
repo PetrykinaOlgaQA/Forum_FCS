@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block title %}{{ post.topic_title }} — ФКН ВГУ{% endblock %}
+{% block content %}
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="d-flex flex-wrap gap-2 mb-2">
+            <span class="badge bg-primary">{{ post.topic_title }}</span>
+            {% if post.post_type == 'good' %}
+            <span class="badge bg-success">Товар</span>
+            {% elif post.post_type == 'service' %}
+            <span class="badge bg-info text-dark">Услуга</span>
+            {% else %}
+            <span class="badge bg-secondary">Обсуждение</span>
+            {% endif %}
+        </div>
+        {% if post.meta %}
+            {% set m = post.meta if post.meta is mapping else {} %}
+            {% if m.get('price_rub') %}
+            <p class="mb-1"><strong>Цена:</strong> {{ m.get('price_rub') }} ₽</p>
+            {% endif %}
+            {% if m.get('contact') %}
+            <p class="mb-2 text-muted"><strong>Контакт:</strong> {{ m.get('contact') }}</p>
+            {% endif %}
+        {% endif %}
+        <p class="mb-2">{{ post.content }}</p>
+        <small class="text-muted">Автор: {{ post.author }} • {{ post.created_date.strftime('%d.%m.%Y %H:%M') }}</small>
+        <div class="mt-3 d-flex flex-wrap align-items-center gap-2">
+            {% if user %}
+            <form method="POST" action="{{ url_for('toggle_post_like', post_id=post.id) }}" class="d-inline">
+                <button type="submit" class="btn btn-sm {% if user_liked %}btn-danger{% else %}btn-outline-danger{% endif %}">
+                    <i class="bi bi-heart{% if user_liked %}-fill{% endif %} me-1"></i>
+                    Нравится ({{ post.like_count }})
+                </button>
+            </form>
+            {% else %}
+            <span class="badge bg-light text-dark border"><i class="bi bi-heart me-1"></i>{{ post.like_count }}</span>
+            {% endif %}
+        </div>
+        {% if user and (user.id == post.user_id or is_moderator()) %}
+            <div class="mt-2">
+                {% if user.id == post.user_id %}
+                <a href="{{ url_for('edit_post', post_id=post.id) }}" class="btn btn-sm btn-outline-primary">Редактировать пост</a>
+                {% endif %}
+                <form method="POST" action="{{ url_for('delete_post', post_id=post.id) }}" style="display:inline;" onsubmit="return confirm('Удалить пост и все комментарии?')">
+                    <button type="submit" class="btn btn-sm btn-outline-danger">{% if is_moderator() and user.id != post.user_id %}Удалить (модератор){% else %}Удалить пост{% endif %}</button>
+                </form>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<h4>💬 Комментарии ({{ comments|length }})</h4>
+{% for c in comments %}
+<div class="card mb-2">
+    <div class="card-body">
+        <strong>{{ c.author }}</strong> • {{ c.created_date.strftime('%d.%m.%Y %H:%M') }}
+        {% if c.deleted_by_moderator %}
+        <span class="badge bg-warning text-dark ms-1">модерация</span>
+        {% endif %}
+        <p class="mb-0 mt-1">{{ c.content }}</p>
+        {% if user %}
+            <div class="mt-2">
+                {% if user.id == c.user_id and not c.deleted_by_moderator %}
+                <a href="{{ url_for('edit_comment', comment_id=c.id) }}" class="btn btn-sm btn-outline-primary">Редактировать</a>
+                <form method="POST" action="{{ url_for('delete_comment', comment_id=c.id) }}" style="display:inline;" onsubmit="return confirm('Удалить комментарий?')">
+                    <button type="submit" class="btn btn-sm btn-outline-danger">Удалить</button>
+                </form>
+                {% elif is_moderator() and user.id != c.user_id and not c.deleted_by_moderator %}
+                <form method="POST" action="{{ url_for('delete_comment', comment_id=c.id) }}" style="display:inline;" onsubmit="return confirm('Скрыть комментарий модератором?')">
+                    <button type="submit" class="btn btn-sm btn-outline-warning">Скрыть (модератор)</button>
+                </form>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endfor %}
+
+{% if user %}
+<hr>
+<form method="POST">
+    <div class="mb-3">
+        <textarea name="content" class="form-control" rows="3" placeholder="Ваш комментарий..." required></textarea>
+    </div>
+    <button type="submit" class="btn btn-success">Отправить</button>
+</form>
+{% else %}
+<p><a href="{{ url_for('login', next=request.url) }}">Войдите</a>, чтобы оставить комментарий или лайк.</p>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Новая публикация — ФКН ВГУ{% endblock %}
+{% block content %}
+<h2 class="mb-3">📝 Создать публикацию</h2>
+<p class="text-muted small mb-4">Тип: обсуждение, объявление о товаре или услуге (по ТЗ курсового проекта).</p>
+<form method="POST">
+    <div class="mb-3">
+        <label class="form-label">Тип *</label>
+        <select name="post_type" class="form-select" id="postType">
+            <option value="post">Пост / обсуждение</option>
+            <option value="good">Товар (продажа)</option>
+            <option value="service">Услуга</option>
+        </select>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Название темы *</label>
+        <input name="topic_title" class="form-control" placeholder="Например: Олимпиадное программирование · ВГУ" required>
+    </div>
+    <div class="mb-3" id="extraFields" style="display:none;">
+        <label class="form-label">Цена, ₽ (необязательно)</label>
+        <input name="price_rub" type="number" min="0" class="form-control mb-2" placeholder="500">
+        <label class="form-label">Контакт (Telegram, email…)</label>
+        <input name="contact" class="form-control" placeholder="@nickname или example@student.vsu.ru">
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Текст *</label>
+        <textarea name="content" class="form-control" rows="6" placeholder="Описание, условия, детали…" required></textarea>
+    </div>
+    <button type="submit" class="btn btn-success">Опубликовать</button>
+    <a href="{{ url_for('index') }}" class="btn btn-secondary">Отмена</a>
+</form>
+<script>
+document.getElementById('postType').addEventListener('change', function() {
+    document.getElementById('extraFields').style.display =
+        (this.value === 'good' || this.value === 'service') ? 'block' : 'none';
+});
+document.getElementById('postType').dispatchEvent(new Event('change'));
+</script>
+{% endblock %}

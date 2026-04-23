@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Темы-пары — ФКН ВГУ{% endblock %}
+{% block content %}
+<h2 class="mb-3"><i class="bi bi-link-45deg me-2"></i>Тематические пары «тема — тема»</h2>
+<p class="text-muted mb-4">
+    Связки разделов для перекрёстных обсуждений (по заданию на курсовой проект: тематическое информационное взаимодействие).
+</p>
+{% if pairs %}
+<div class="list-group">
+    {% for row in pairs %}
+    <div class="list-group-item d-flex flex-column flex-md-row justify-content-between align-items-start gap-2">
+        <div>
+            <span class="badge bg-primary me-1">{{ row.left_title }}</span>
+            <i class="bi bi-arrow-left-right text-muted mx-1"></i>
+            <span class="badge bg-secondary">{{ row.right_title }}</span>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<p class="text-muted">Пары тем пока не заданы. Запустите <code>python seed_fcs_vsu.py</code> после создания схемы.</p>
+{% endif %}
+{% endblock %}
