@@ -13,7 +13,7 @@ class CommentRepository(BaseRepository):
                         THEN '[Сообщение удалено модератором]'
                         ELSE c.content END AS content,
                    c.created_date, u.username AS author, c.user_id,
-                   c.deleted_by_moderator
+                   c.deleted_by_moderator, c.parent_id
             FROM comments c
             JOIN users u ON c.user_id = u.id
             WHERE c.post_id = :id
@@ -23,15 +23,20 @@ class CommentRepository(BaseRepository):
             {"id": post_id},
         ).fetchall()
 
-    def create(self, post_id: int, user_id: int, content: str):
+    def create(self, post_id: int, user_id: int, content: str, parent_id: int | None = None):
         self.conn.execute(
             text(
                 """
-                INSERT INTO comments (post_id, user_id, content)
-                VALUES (:post_id, :user_id, :content)
+                INSERT INTO comments (post_id, user_id, content, parent_id)
+                VALUES (:post_id, :user_id, :content, :parent_id)
                 """
             ),
-            {"post_id": post_id, "user_id": user_id, "content": content},
+            {
+                "post_id": post_id,
+                "user_id": user_id,
+                "content": content,
+                "parent_id": parent_id,
+            },
         )
 
     def update(self, comment_id: int, content: str):
@@ -65,7 +70,7 @@ class CommentRepository(BaseRepository):
         return self.conn.execute(
             text(
                 """
-            SELECT c.id, c.content, c.created_date, c.user_id, c.post_id, c.deleted_by_moderator
+            SELECT c.id, c.content, c.created_date, c.user_id, c.post_id, c.deleted_by_moderator, c.parent_id
             FROM comments c
             WHERE c.id = :id
         """

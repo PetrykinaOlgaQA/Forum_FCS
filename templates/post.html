@@ -3,6 +3,7 @@
 {% block content %}
 <div class="card mb-4">
     <div class="card-body">
+        {% set post_abs_url = request.host_url.rstrip('/') ~ url_for('post', post_id=post.id) %}
         <div class="d-flex flex-wrap gap-2 mb-2">
             <span class="badge bg-primary">{{ post.topic_title }}</span>
             {% if post.post_type == 'good' %}
@@ -12,37 +13,51 @@
             {% else %}
             <span class="badge bg-secondary">Обсуждение</span>
             {% endif %}
+            <span class="badge bg-light text-dark border small">{{ post.content | read_minutes }} мин чтения</span>
+            <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2 btn-copy-post-url" data-url="{{ post_abs_url }}" title="Копировать ссылку"><i class="bi bi-link-45deg"></i></button>
         </div>
         {% if post.meta %}
             {% set m = post.meta if post.meta is mapping else {} %}
+            {% if m.get('good_photo') and post.post_type == 'good' %}
+            <div class="mb-3">
+                <img src="{{ url_for('static', filename=m.get('good_photo')) }}" alt="Фото товара" class="rounded img-fluid border" style="max-height: 320px;">
+            </div>
+            {% endif %}
             {% if m.get('price_rub') %}
             <p class="mb-1"><strong>Цена:</strong> {{ m.get('price_rub') }} ₽</p>
             {% endif %}
             {% if m.get('contact') %}
-            <p class="mb-2 text-muted"><strong>Контакт:</strong> {{ m.get('contact') }}</p>
+            <p class="mb-1 text-muted"><strong>Telegram:</strong> {{ m.get('contact') }}</p>
+            {% endif %}
+            {% if m.get('contact_link') %}
+            <p class="mb-2"><strong>Ссылка:</strong> <a href="{{ m.get('contact_link') }}" rel="noopener noreferrer" target="_blank">{{ m.get('contact_link') }}</a></p>
             {% endif %}
         {% endif %}
         <p class="mb-2">{{ post.content }}</p>
         <small class="text-muted">Автор: {{ post.author }} • {{ post.created_date.strftime('%d.%m.%Y %H:%M') }}</small>
         <div class="mt-3 d-flex flex-wrap align-items-center gap-2">
             {% if user %}
-            <form method="POST" action="{{ url_for('toggle_post_like', post_id=post.id) }}" class="d-inline">
-                <button type="submit" class="btn btn-sm {% if user_liked %}btn-danger{% else %}btn-outline-danger{% endif %}">
-                    <i class="bi bi-heart{% if user_liked %}-fill{% endif %} me-1"></i>
-                    Нравится ({{ post.like_count }})
-                </button>
-            </form>
+            <button type="button" id="postLikeBtn" class="btn btn-sm {% if user_liked %}btn-danger{% else %}btn-outline-danger{% endif %}" data-like-url="{{ url_for('api_post_like', post_id=post.id) }}">
+                <i class="bi bi-heart{% if user_liked %}-fill{% endif %} me-1" id="postLikeIcon"></i>
+                Нравится (<span id="postLikeCount">{{ post.like_count }}</span>)
+            </button>
             {% else %}
             <span class="badge bg-light text-dark border"><i class="bi bi-heart me-1"></i>{{ post.like_count }}</span>
             {% endif %}
         </div>
-        {% if user and (user.id == post.user_id or is_moderator()) %}
+        {% if user and (user.id == post.user_id or is_staff()) %}
             <div class="mt-2">
                 {% if user.id == post.user_id %}
                 <a href="{{ url_for('edit_post', post_id=post.id) }}" class="btn btn-sm btn-outline-primary">Редактировать пост</a>
                 {% endif %}
-                <form method="POST" action="{{ url_for('delete_post', post_id=post.id) }}" style="display:inline;" onsubmit="return confirm('Удалить пост и все комментарии?')">
-                    <button type="submit" class="btn btn-sm btn-outline-danger">{% if is_moderator() and user.id != post.user_id %}Удалить (модератор){% else %}Удалить пост{% endif %}</button>
+                <form method="POST" action="{{ url_for('delete_post', post_id=post.id) }}" class="d-inline-flex flex-wrap align-items-end gap-2" onsubmit="return confirm('Удалить пост и все комментарии?')">
+                    {% if is_admin() and user.id != post.user_id %}
+                    <div class="flex-grow-1" style="min-width:200px;max-width:360px;">
+                      <label class="form-label small text-danger mb-0">Причина удаления *</label>
+                      <textarea name="delete_reason" class="form-control form-control-sm" rows="2" required minlength="8" maxlength="2000" placeholder="Минимум 8 символов"></textarea>
+                    </div>
+                    {% endif %}
+                    <button type="submit" class="btn btn-sm btn-outline-danger">{% if is_staff() and user.id != post.user_id %}Удалить (модерация){% else %}Удалить пост{% endif %}</button>
                 </form>
             </div>
         {% endif %}
@@ -50,25 +65,31 @@
 </div>
 
 <h4>💬 Комментарии ({{ comments|length }})</h4>
-{% for c in comments %}
-<div class="card mb-2">
-    <div class="card-body">
+{% for c, depth in comment_tree %}
+<div class="card mb-2" style="margin-left: {{ depth * 1.25 }}rem;">
+    <div class="card-body py-2">
         <strong>{{ c.author }}</strong> • {{ c.created_date.strftime('%d.%m.%Y %H:%M') }}
         {% if c.deleted_by_moderator %}
         <span class="badge bg-warning text-dark ms-1">модерация</span>
         {% endif %}
         <p class="mb-0 mt-1">{{ c.content }}</p>
         {% if user %}
-            <div class="mt-2">
+            <div class="mt-2 d-flex flex-wrap gap-1 align-items-center">
                 {% if user.id == c.user_id and not c.deleted_by_moderator %}
                 <a href="{{ url_for('edit_comment', comment_id=c.id) }}" class="btn btn-sm btn-outline-primary">Редактировать</a>
                 <form method="POST" action="{{ url_for('delete_comment', comment_id=c.id) }}" style="display:inline;" onsubmit="return confirm('Удалить комментарий?')">
                     <button type="submit" class="btn btn-sm btn-outline-danger">Удалить</button>
                 </form>
-                {% elif is_moderator() and user.id != c.user_id and not c.deleted_by_moderator %}
-                <form method="POST" action="{{ url_for('delete_comment', comment_id=c.id) }}" style="display:inline;" onsubmit="return confirm('Скрыть комментарий модератором?')">
-                    <button type="submit" class="btn btn-sm btn-outline-warning">Скрыть (модератор)</button>
+                {% elif is_staff() and user.id != c.user_id and not c.deleted_by_moderator %}
+                <form method="POST" action="{{ url_for('delete_comment', comment_id=c.id) }}" class="d-inline-flex flex-wrap align-items-end gap-1" onsubmit="return confirm('Удалить этот комментарий безвозвратно?');">
+                    {% if is_admin() %}
+                    <textarea name="delete_reason" class="form-control form-control-sm" rows="1" style="min-width:180px;max-width:280px;" required minlength="8" maxlength="2000" placeholder="Причина удаления"></textarea>
+                    {% endif %}
+                    <button type="submit" class="btn btn-sm btn-outline-danger">Удалить коммент.</button>
                 </form>
+                {% endif %}
+                {% if user and not c.deleted_by_moderator %}
+                <button type="button" class="btn btn-sm btn-outline-secondary btn-reply" data-parent-id="{{ c.id }}">Ответить</button>
                 {% endif %}
             </div>
         {% endif %}
@@ -78,13 +99,81 @@
 
 {% if user %}
 <hr>
-<form method="POST">
+<form method="POST" id="mainCommentForm">
+    <input type="hidden" name="parent_id" id="comment_parent_id" value="">
+    <div class="mb-2 small text-muted" id="replyBanner" style="display:none;">Ответ на комментарий #<span id="replyToId"></span>
+        <button type="button" class="btn btn-link btn-sm p-0 ms-1" id="cancelReply">Отменить</button>
+    </div>
     <div class="mb-3">
         <textarea name="content" class="form-control" rows="3" placeholder="Ваш комментарий..." required></textarea>
     </div>
     <button type="submit" class="btn btn-success">Отправить</button>
 </form>
+<script>
+document.querySelectorAll('.btn-copy-post-url').forEach(function (btn) {
+  btn.addEventListener('click', function () {
+    var url = btn.getAttribute('data-url');
+    function ok(){ if(typeof window.showAppToast==='function') window.showAppToast('Ссылка скопирована'); }
+    function fail(){ if(typeof window.showAppToast==='function') window.showAppToast('Не удалось скопировать','danger'); }
+    if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(url).then(ok).catch(fail); }
+    else{ var ta=document.createElement('textarea'); ta.value=url; document.body.appendChild(ta); ta.select();
+      try{ document.execCommand('copy'); ok(); }catch(e){ fail(); } document.body.removeChild(ta);}
+  });
+});
+(function(){
+  document.querySelectorAll('.btn-reply').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var id = btn.getAttribute('data-parent-id');
+      document.getElementById('comment_parent_id').value = id;
+      document.getElementById('replyToId').textContent = id;
+      document.getElementById('replyBanner').style.display = 'block';
+      document.querySelector('#mainCommentForm textarea').focus();
+    });
+  });
+  var cancel = document.getElementById('cancelReply');
+  if (cancel) cancel.addEventListener('click', function(){
+    document.getElementById('comment_parent_id').value = '';
+    document.getElementById('replyBanner').style.display = 'none';
+  });
+})();
+(function(){
+  var form = document.getElementById('mainCommentForm');
+  var ta = form ? form.querySelector('textarea[name="content"]') : null;
+  if (ta) ta.addEventListener('keydown', function(e){
+    if (e.ctrlKey && e.key === 'Enter') { e.preventDefault(); form.submit(); }
+  });
+})();
+</script>
 {% else %}
 <p><a href="{{ url_for('login', next=request.url) }}">Войдите</a>, чтобы оставить комментарий или лайк.</p>
+<script>
+document.querySelectorAll('.btn-copy-post-url').forEach(function (btn) {
+  btn.addEventListener('click', function () {
+    var url = btn.getAttribute('data-url');
+    if (navigator.clipboard && navigator.clipboard.writeText)
+      navigator.clipboard.writeText(url).then(function () {
+        if (typeof window.showAppToast === 'function') window.showAppToast('Ссылка скопирована');
+      });
+  });
+});
+</script>
+{% endif %}
+{% if user %}
+<script>
+(function(){
+  const btn = document.getElementById('postLikeBtn');
+  if (!btn) return;
+  btn.addEventListener('click', async function() {
+    const r = await fetch(btn.dataset.likeUrl, { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+    const d = await r.json();
+    if (!d.ok) return;
+    document.getElementById('postLikeCount').textContent = d.like_count;
+    btn.classList.toggle('btn-danger', d.liked);
+    btn.classList.toggle('btn-outline-danger', !d.liked);
+    const ic = document.getElementById('postLikeIcon');
+    ic.className = d.liked ? 'bi bi-heart-fill me-1' : 'bi bi-heart me-1';
+  });
+})();
+</script>
 {% endif %}
 {% endblock %}

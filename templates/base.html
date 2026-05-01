@@ -7,8 +7,6 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
-        {% if theme == 'old' %}
-        /* Старый простой дизайн */
         .auth-links, .action-links {
             display: flex !important;
             flex-direction: row !important;
@@ -21,8 +19,7 @@
             padding: 0.25rem 0.5rem !important;
             white-space: nowrap;
         }
-        {% else %}
-        /* ========== МЕГА КРУТОЙ ФИОЛЕТОВЫЙ ДИЗАЙН ========== */
+        /* ========== Фиолетовая тема ========== */
         :root {
             --purple-primary: #9c27b0;
             --purple-dark: #6a1b9a;
@@ -586,42 +583,6 @@
             color: var(--purple-dark);
             box-shadow: 0 2px 4px rgba(156, 39, 176, 0.2);
         }
-        {% endif %}
-
-        /* === КНОПКИ ПЕРЕКЛЮЧЕНИЯ ТЕМЫ === */
-        .theme-toggle-btn {
-            background-color: #fff;
-            border: 2px solid;
-            border-radius: 8px;
-            font-weight: 600;
-            transition: all 0.25s ease;
-            text-decoration: none !important;
-            padding: 0.25rem 0.75rem !important;
-            font-size: 0.875rem;
-            display: inline-block;
-        }
-
-
-        .theme-toggle-old:hover {
-            background-color: #9c27b0 !important;
-            color: #5f2069 !important;
-            transform: translateY(-1px);
-            box-shadow: 0 2px 6px rgba(156, 39, 176, 0.3);
-        }
-
-        /* Новый дизайн → синяя при наведении */
-        .theme-toggle-new {
-            color: #9c27b0 !important;
-            border-color: #5f2069 !important;
-        }
-        .theme-toggle-new:hover {
-            border-color: #0d6efd !important;
-            border-color: #0d6efd !important;
-            background-color: #0d6efd !important;
-            color: #fff !important;
-            transform: translateY(-1px);
-            box-shadow: 0 2px 6px rgba(13, 110, 253, 0.3);
-        }
 
         /* Адаптация для мобильных */
         @media (max-width: 991px) {
@@ -632,12 +593,25 @@
     </style>
 </head>
 <body>
-<nav class="navbar navbar-expand-lg {% if theme == 'new' %}navbar-dark{% else %}navbar-dark bg-primary{% endif %}">
+<nav class="navbar navbar-expand-lg navbar-dark">
     <div class="container">
         <!-- В шапке -->
     <a class="navbar-brand" href="/">🎓 ФКН Хаб · ВГУ</a>
 
         <!-- Кнопки создания (только для авторизованных) -->
+        {% if is_staff() %}
+        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-sm btn-outline-light d-none d-md-inline me-1">
+            <i class="bi bi-shield-lock me-1"></i>Админ
+        </a>
+        {% endif %}
+        {% if is_admin() %}
+        <a href="{{ url_for('admin_mutes') }}" class="btn btn-sm btn-outline-light d-none d-md-inline me-1" title="Муты за мат">
+            <i class="bi bi-mic-mute me-1"></i>Муты
+        </a>
+        <a href="{{ url_for('admin_topics') }}" class="btn btn-sm btn-outline-light d-none d-md-inline me-1" title="Темы">
+            <i class="bi bi-folder2-open me-1"></i>Темы
+        </a>
+        {% endif %}
         <a href="{{ url_for('topic_pairs') }}" class="btn btn-sm btn-outline-light d-none d-md-inline me-1">
             <i class="bi bi-diagram-3 me-1"></i>Темы-пары
         </a>
@@ -660,16 +634,9 @@
         {% endif %}
 
         <div class="navbar-nav d-flex flex-row align-items-center gap-2">
-            <!-- Кнопка переключения темы -->
-            {% if theme == 'new' %}
-                <a href="{{ url_for('toggle_theme') }}" class="theme-toggle-btn theme-toggle-new">
-                    🔙 Старый дизайн
-                </a>
-                <!-- Переключатель темной темы -->
-                <button class="btn btn-sm btn-outline-light" onclick="toggleDarkMode()" title="Темная тема">
-                    <i class="bi {% if dark_mode %}bi-sun{% else %}bi-moon{% endif %}"></i>
-                </button>
-            {% endif %}
+            <button type="button" class="btn btn-sm btn-outline-light" id="darkModeBtn" title="Темная тема">
+                <i class="bi {% if dark_mode %}bi-sun{% else %}bi-moon{% endif %}"></i>
+            </button>
 
             <!-- Профиль / Авторизация -->
             {% if user %}
@@ -683,8 +650,8 @@
                 </div>
             {% else %}
                 <div class="auth-links d-flex">
-                    <a class="nav-link" href="{{ url_for('login') }}">Войти</a>
-                    <span class="text-divider {% if theme == 'new' %}text-light{% else %}text-white{% endif %}">|</span>
+                    <button type="button" class="nav-link btn btn-link text-white text-decoration-none border-0 py-0" data-bs-toggle="modal" data-bs-target="#loginModal">Войти</button>
+                    <span class="text-divider text-light">|</span>
                     <a class="nav-link" href="{{ url_for('register') }}">Регистрация</a>
                 </div>
             {% endif %}
@@ -692,29 +659,50 @@
     </div>
 </nav>
 
+<div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="loginModalLabel">Вход</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div id="loginModalError" class="alert alert-danger d-none" role="alert"></div>
+        <form id="loginModalForm">
+          <div class="mb-3">
+            <label class="form-label" for="modalEmail">Email</label>
+            <input type="email" class="form-control" id="modalEmail" name="email" required autocomplete="email">
+          </div>
+          <div class="mb-3">
+            <label class="form-label" for="modalPassword">Пароль</label>
+            <input type="password" class="form-control" id="modalPassword" name="password" required autocomplete="current-password">
+          </div>
+          <button type="submit" class="btn btn-primary w-100">Войти</button>
+        </form>
+        <p class="small text-muted mt-3 mb-0"><a href="{{ url_for('login') }}">Открыть страницу входа</a></p>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="container mt-4">
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             {% for category, message in messages %}
                 <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show alert-enhanced" role="alert">
-                    {% if theme == 'new' %}
-                        <div class="d-flex align-items-center">
-                            {% if category == 'success' %}
-                                <i class="bi bi-check-circle-fill me-2" style="font-size: 1.5rem;"></i>
-                            {% elif category == 'danger' or category == 'error' %}
-                                <i class="bi bi-exclamation-triangle-fill me-2" style="font-size: 1.5rem;"></i>
-                            {% elif category == 'info' %}
-                                <i class="bi bi-info-circle-fill me-2" style="font-size: 1.5rem;"></i>
-                            {% else %}
-                                <i class="bi bi-bell-fill me-2" style="font-size: 1.5rem;"></i>
-                            {% endif %}
-                            <div class="flex-grow-1">{{ message }}</div>
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                        </div>
-                    {% else %}
-                        {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                    {% endif %}
+                    <div class="d-flex align-items-center">
+                        {% if category == 'success' %}
+                            <i class="bi bi-check-circle-fill me-2" style="font-size: 1.5rem;"></i>
+                        {% elif category == 'danger' or category == 'error' %}
+                            <i class="bi bi-exclamation-triangle-fill me-2" style="font-size: 1.5rem;"></i>
+                        {% elif category == 'info' %}
+                            <i class="bi bi-info-circle-fill me-2" style="font-size: 1.5rem;"></i>
+                        {% else %}
+                            <i class="bi bi-bell-fill me-2" style="font-size: 1.5rem;"></i>
+                        {% endif %}
+                        <div class="flex-grow-1">{{ message }}</div>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
                 </div>
             {% endfor %}
         {% endif %}
@@ -723,7 +711,26 @@
     {% block content %}{% endblock %}
 </div>
 
-{% if theme == 'new' %}
+<div class="modal fade" id="profanityModal" tabindex="-1" aria-labelledby="profanityModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-danger">
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title" id="profanityModalLabel">Обнаружен мат</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+      </div>
+      <div class="modal-body">
+        <p class="mb-2">В тексте использовалась нецензурная лексика. Сообщение <strong>не было сохранено</strong>.</p>
+        <p class="mb-0">На <strong>1 час</strong> для вашего аккаунта отключены создание постов и написание комментариев.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Понятно</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="appToastContainer" class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1090"></div>
+
 <!-- Лоадер между страницами -->
 <div id="page-loader">
     <div class="loader-spinner"></div>
@@ -734,11 +741,9 @@
 <button id="scrollToTop" title="Наверх">
     <i class="bi bi-arrow-up"></i>
 </button>
-{% endif %}
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
-{% if theme == 'new' %}
 <script>
     // Лоадер при переходах между страницами
     document.addEventListener('DOMContentLoaded', function() {
@@ -819,12 +824,12 @@
         observer.observe(card);
     });
 
-    // Переключение темной темы
-    function toggleDarkMode() {
+    document.getElementById('darkModeBtn').addEventListener('click', function toggleDarkMode() {
+        const btn = document.getElementById('darkModeBtn');
         fetch('{{ url_for("toggle_dark_mode") }}')
             .then(() => {
                 document.body.classList.toggle('dark-mode');
-                const icon = event.target.closest('button').querySelector('i');
+                const icon = btn.querySelector('i');
                 if (icon.classList.contains('bi-moon')) {
                     icon.classList.remove('bi-moon');
                     icon.classList.add('bi-sun');
@@ -833,13 +838,70 @@
                     icon.classList.add('bi-moon');
                 }
             });
-    }
+    });
 
-    // Применяем темную тему при загрузке
     {% if dark_mode %}
     document.body.classList.add('dark-mode');
     {% endif %}
+
+    const loginForm = document.getElementById('loginModalForm');
+    {% if show_profanity_modal %}
+    (function () {
+        var el = document.getElementById('profanityModal');
+        if (el && typeof bootstrap !== 'undefined') {
+            var m = new bootstrap.Modal(el);
+            m.show();
+        }
+    })();
+    {% endif %}
+
+    window.showAppToast = function (message, variant) {
+        var c = document.getElementById('appToastContainer');
+        if (!c || typeof bootstrap === 'undefined') return;
+        variant = variant || 'success';
+        var bg = variant === 'danger' ? 'danger' : (variant === 'info' ? 'primary' : 'success');
+        var el = document.createElement('div');
+        el.className = 'toast align-items-center text-bg-' + bg + ' border-0 shadow';
+        el.setAttribute('role', 'status');
+        var flex = document.createElement('div');
+        flex.className = 'd-flex';
+        var body = document.createElement('div');
+        body.className = 'toast-body';
+        body.textContent = message;
+        var close = document.createElement('button');
+        close.type = 'button';
+        close.className = 'btn-close btn-close-white me-2 m-auto';
+        close.setAttribute('data-bs-dismiss', 'toast');
+        flex.appendChild(body);
+        flex.appendChild(close);
+        el.appendChild(flex);
+        c.appendChild(el);
+        var t = new bootstrap.Toast(el, { delay: 2600 });
+        el.addEventListener('hidden.bs.toast', function () { el.remove(); });
+        t.show();
+    };
+
+    if (loginForm) {
+        loginForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const errBox = document.getElementById('loginModalError');
+            errBox.classList.add('d-none');
+            const email = document.getElementById('modalEmail').value;
+            const password = document.getElementById('modalPassword').value;
+            const r = await fetch('{{ url_for("api_login") }}', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+            const d = await r.json();
+            if (d.ok) {
+                window.location.reload();
+            } else {
+                errBox.textContent = d.error || 'Ошибка входа';
+                errBox.classList.remove('d-none');
+            }
+        });
+    }
 </script>
-{% endif %}
 </body>
 </html>

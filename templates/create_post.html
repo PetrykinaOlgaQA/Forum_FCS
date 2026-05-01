@@ -2,8 +2,11 @@
 {% block title %}Новая публикация — ФКН ВГУ{% endblock %}
 {% block content %}
 <h2 class="mb-3">📝 Создать публикацию</h2>
-<p class="text-muted small mb-4">Тип: обсуждение, объявление о товаре или услуге (по ТЗ курсового проекта).</p>
-<form method="POST">
+<p class="text-muted small mb-4">Тема выбирается только из уже созданных разделов. Тип: обсуждение, товар или услуга.</p>
+{% if not topics %}
+<div class="alert alert-warning">Нет ни одной темы. Сначала <a href="{{ url_for('create_topic') }}">создайте тему</a>.</div>
+{% endif %}
+<form method="POST" enctype="multipart/form-data">
     <div class="mb-3">
         <label class="form-label">Тип *</label>
         <select name="post_type" class="form-select" id="postType">
@@ -13,27 +16,60 @@
         </select>
     </div>
     <div class="mb-3">
-        <label class="form-label">Название темы *</label>
-        <input name="topic_title" class="form-control" placeholder="Например: Олимпиадное программирование · ВГУ" required>
+        <label class="form-label">Тема *</label>
+        <select name="topic_id" class="form-select" required {% if not topics %}disabled{% endif %}>
+            <option value="" disabled selected>— выберите тему —</option>
+            {% for t in topics %}
+            <option value="{{ t[0] }}">{{ t[1] }}</option>
+            {% endfor %}
+        </select>
     </div>
     <div class="mb-3" id="extraFields" style="display:none;">
-        <label class="form-label">Цена, ₽ (необязательно)</label>
-        <input name="price_rub" type="number" min="0" class="form-control mb-2" placeholder="500">
-        <label class="form-label">Контакт (Telegram, email…)</label>
-        <input name="contact" class="form-control" placeholder="@nickname или example@student.vsu.ru">
+        <label class="form-label">Цена, ₽ <span id="priceRequiredMark" class="text-danger">*</span></label>
+        <input name="price_rub" type="number" min="0" step="1" class="form-control mb-2" placeholder="Например: 500">
+        <p class="small text-muted mb-2" id="priceHint"></p>
+        <label class="form-label">Ник в Telegram *</label>
+        <input name="contact_tg" class="form-control mb-2" placeholder="@nickname или nickname" autocomplete="off">
+        <label class="form-label">Ссылка (необязательно)</label>
+        <input name="contact_link" type="url" class="form-control mb-2" placeholder="https://…">
+        <div id="goodPhotoWrap" class="mb-2" style="display:none;">
+            <label class="form-label">Фото товара (необязательно)</label>
+            <input type="file" name="good_photo" class="form-control" accept="image/jpeg,image/png,image/gif,image/webp">
+            <small class="text-muted">JPG, PNG, GIF, WEBP, до 5 МБ.</small>
+        </div>
     </div>
     <div class="mb-3">
         <label class="form-label">Текст *</label>
         <textarea name="content" class="form-control" rows="6" placeholder="Описание, условия, детали…" required></textarea>
     </div>
-    <button type="submit" class="btn btn-success">Опубликовать</button>
+    <button type="submit" class="btn btn-success" {% if not topics %}disabled{% endif %}>Опубликовать</button>
     <a href="{{ url_for('index') }}" class="btn btn-secondary">Отмена</a>
 </form>
 <script>
-document.getElementById('postType').addEventListener('change', function() {
-    document.getElementById('extraFields').style.display =
-        (this.value === 'good' || this.value === 'service') ? 'block' : 'none';
-});
-document.getElementById('postType').dispatchEvent(new Event('change'));
+(function () {
+    var sel = document.getElementById('postType');
+    var extra = document.getElementById('extraFields');
+    var mark = document.getElementById('priceRequiredMark');
+    var hint = document.getElementById('priceHint');
+    var photoWrap = document.getElementById('goodPhotoWrap');
+    function sync() {
+        var v = sel.value;
+        extra.style.display = (v === 'good' || v === 'service') ? 'block' : 'none';
+        if (v === 'good') {
+            mark.style.display = '';
+            hint.textContent = 'Для товара цена обязательна — целое число рублей.';
+            photoWrap.style.display = 'block';
+        } else if (v === 'service') {
+            mark.style.display = 'none';
+            hint.textContent = 'Для услуги цена необязательна; если указываете — только целое число рублей.';
+            photoWrap.style.display = 'none';
+        } else {
+            hint.textContent = '';
+            photoWrap.style.display = 'none';
+        }
+    }
+    sel.addEventListener('change', sync);
+    sync();
+})();
 </script>
 {% endblock %}

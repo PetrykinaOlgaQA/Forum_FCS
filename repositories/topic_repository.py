@@ -7,6 +7,11 @@ class TopicRepository(BaseRepository):
             text("SELECT id FROM topics WHERE title = :title"), {"title": title}
         ).fetchone()
 
+    def get_by_id(self, topic_id: int):
+        return self.conn.execute(
+            text("SELECT id, title FROM topics WHERE id = :id"), {"id": topic_id}
+        ).fetchone()
+
     def create(self, title: str, description: str, user_id: int):
         result = self.conn.execute(
             text(
@@ -40,3 +45,21 @@ class TopicRepository(BaseRepository):
                 """
             )
         ).fetchall()
+
+    def list_with_stats(self, limit: int = 500):
+        return self.conn.execute(
+            text(
+                """
+                SELECT t.id, t.title, t.description, u.username AS author,
+                       (SELECT COUNT(*) FROM posts p WHERE p.topic_id = t.id) AS post_count
+                FROM topics t
+                JOIN users u ON u.id = t.user_id
+                ORDER BY t.title
+                LIMIT :lim
+                """
+            ),
+            {"lim": limit},
+        ).fetchall()
+
+    def delete(self, topic_id: int):
+        self.conn.execute(text("DELETE FROM topics WHERE id = :id"), {"id": topic_id})

@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Админ — посты{% endblock %}
+{% block content %}
+<h1 class="mb-4">Посты</h1>
+<p><a href="{{ url_for('admin_dashboard') }}">&larr; Назад</a></p>
+<table class="table table-sm"><thead><tr><th>ID</th><th>Фрагмент</th><th>Автор</th><th>Дата</th><th></th></tr></thead><tbody>
+{% for r in posts %}
+<tr>
+<td>{{ r.id }}</td><td>{{ r.snippet }}</td><td>{{ r.author }}</td><td>{{ r.created_date }}</td>
+<td style="min-width:200px;">
+{% if is_admin() %}
+<form method="POST" action="{{ url_for('admin_delete_post_route', post_id=r.id) }}" class="d-flex flex-column gap-1" onsubmit="return confirm('Удалить пост?');">
+  <textarea name="delete_reason" class="form-control form-control-sm" rows="2" required minlength="8" maxlength="2000" placeholder="Причина *"></textarea>
+  <button class="btn btn-sm btn-danger" type="submit">Удалить</button>
+</form>
+{% else %}
+<form method="POST" action="{{ url_for('admin_delete_post_route', post_id=r.id) }}" onsubmit="return confirm('Удалить?')"><button class="btn btn-sm btn-danger" type="submit">Удалить</button></form>
+{% endif %}
+</td>
+</tr>
+{% endfor %}
+</tbody></table>
+{% endblock %}

@@ -3,9 +3,6 @@
 {% block title %}Регистрация - Форум{% endblock %}
 
 {% block content %}
-{% if theme == 'old' %}
-    {% include 'register_old.html' %}
-{% else %}
 <div class="auth-container">
     <div class="row justify-content-center align-items-center min-vh-75">
         <div class="col-lg-6 col-md-8 col-sm-10">
@@ -17,6 +14,12 @@
                         </div>
                         <h2 class="fw-bold mb-2">Создать аккаунт</h2>
                         <p class="text-muted">Присоединяйтесь к нашему сообществу</p>
+                        <div class="alert alert-info text-start small mb-0 mt-3" role="note">
+                            <strong>Тестовый администратор</strong> (создаётся при первом запуске приложения, если ещё нет в БД):<br>
+                            Email: <code>{{ admin_demo_email }}</code><br>
+                            Логин: <code>{{ admin_demo_username }}</code><br>
+                            Пароль: <code>{{ admin_demo_password }}</code>
+                        </div>
                     </div>
 
                     <form method="POST" id="registerForm" class="needs-validation" novalidate>
@@ -417,7 +420,7 @@
     }else{
         input.type = "password";
         icon.className = "bi bi-eye";
-    }ы
+    }
 }
 
     function checkPasswordStrength(password) {
@@ -482,5 +485,4 @@
         }, false);
     })();
 </script>
-{% endif %}
 {% endblock %}
