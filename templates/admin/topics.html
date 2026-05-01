@@ -32,10 +32,16 @@
         <td class="small">{{ t.author }}</td>
         <td class="text-end">{{ t.post_count }}</td>
         <td class="text-end" style="min-width:220px;">
-          <form method="post" action="{{ url_for('admin_delete_topic', topic_id=t.id) }}" class="d-flex flex-column align-items-end gap-1"
+          <form method="post" action="{{ url_for('admin_delete_topic', topic_id=t.id) }}" class="d-flex flex-column align-items-stretch gap-1"
                 onsubmit="return confirm('Удалить эту тему и все посты в ней? Действие необратимо.');">
-            <textarea name="delete_reason" class="form-control form-control-sm" rows="2" required minlength="8" maxlength="2000" placeholder="Причина удаления темы *"></textarea>
-            <button type="submit" class="btn btn-sm btn-danger">Удалить тему</button>
+            <button type="button" class="btn btn-sm btn-outline-danger admin-delete-reveal">Удалить тему</button>
+            <div class="admin-delete-reason-panel d-flex flex-column gap-1" style="display:none;" data-display-open="flex">
+              <textarea name="delete_reason" class="form-control form-control-sm" rows="2" minlength="8" maxlength="2000" placeholder="Причина удаления темы *"></textarea>
+              <div class="d-flex flex-wrap gap-1 justify-content-end">
+                <button type="submit" class="btn btn-sm btn-danger">Подтвердить удаление</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary admin-delete-cancel">Отмена</button>
+              </div>
+            </div>
           </form>
         </td>
       </tr>

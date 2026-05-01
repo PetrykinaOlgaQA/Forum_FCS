@@ -97,14 +97,24 @@
               <button type="button" class="btn btn-sm btn-outline-secondary btn-copy-post" data-url="{{ post_abs_url }}" title="Скопировать ссылку"><i class="bi bi-link-45deg"></i></button>
               <a class="btn btn-sm btn-outline-primary" href="{{ url_for('post', post_id=p.id) }}">Открыть</a>
               {% if user and is_staff() %}
-              <form method="POST" action="{{ url_for('delete_post', post_id=p.id) }}" class="d-inline-flex flex-column align-items-end gap-1 border rounded p-2 bg-light bg-opacity-25"
+              {% if is_admin() and p.user_id != user.id %}
+              <form method="POST" action="{{ url_for('delete_post', post_id=p.id) }}" class="d-inline-flex flex-column align-items-stretch gap-1 border rounded p-2 bg-light bg-opacity-25"
                     onsubmit="return confirm('Удалить этот пост и все комментарии?');">
-                {% if is_admin() and p.user_id != user.id %}
-                <label class="form-label small text-danger mb-0 align-self-stretch">Причина удаления *</label>
-                <textarea name="delete_reason" class="form-control form-control-sm" rows="2" required minlength="8" maxlength="2000" placeholder="Минимум 8 символов, напр. нарушение правил"></textarea>
-                {% endif %}
+                <button type="button" class="btn btn-sm btn-outline-danger admin-delete-reveal" title="Модерация">Удалить</button>
+                <div class="admin-delete-reason-panel d-flex flex-column gap-1" style="display:none;" data-display-open="flex">
+                  <label class="form-label small text-danger mb-0">Причина удаления *</label>
+                  <textarea name="delete_reason" class="form-control form-control-sm" rows="2" minlength="8" maxlength="2000" placeholder="Минимум 8 символов, напр. нарушение правил"></textarea>
+                  <div class="d-flex flex-wrap gap-1">
+                    <button type="submit" class="btn btn-sm btn-danger">Подтвердить удаление</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary admin-delete-cancel">Отмена</button>
+                  </div>
+                </div>
+              </form>
+              {% else %}
+              <form method="POST" action="{{ url_for('delete_post', post_id=p.id) }}" class="d-inline" onsubmit="return confirm('Удалить этот пост и все комментарии?');">
                 <button type="submit" class="btn btn-sm btn-outline-danger" title="Модерация">Удалить</button>
               </form>
+              {% endif %}
               {% endif %}
             </div>
           </div>

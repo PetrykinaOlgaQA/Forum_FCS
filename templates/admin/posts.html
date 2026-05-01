@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+﻿{% extends "base.html" %}
 {% block title %}Админ — посты{% endblock %}
 {% block content %}
 <h1 class="mb-4">Посты</h1>
@@ -10,8 +10,14 @@
 <td style="min-width:200px;">
 {% if is_admin() %}
 <form method="POST" action="{{ url_for('admin_delete_post_route', post_id=r.id) }}" class="d-flex flex-column gap-1" onsubmit="return confirm('Удалить пост?');">
-  <textarea name="delete_reason" class="form-control form-control-sm" rows="2" required minlength="8" maxlength="2000" placeholder="Причина *"></textarea>
-  <button class="btn btn-sm btn-danger" type="submit">Удалить</button>
+  <button type="button" class="btn btn-sm btn-outline-danger admin-delete-reveal">Удалить</button>
+  <div class="admin-delete-reason-panel d-flex flex-column gap-1" style="display:none;" data-display-open="flex">
+    <textarea name="delete_reason" class="form-control form-control-sm" rows="2" minlength="8" maxlength="2000" placeholder="Причина *"></textarea>
+    <div class="d-flex flex-wrap gap-1">
+      <button class="btn btn-sm btn-danger" type="submit">Подтвердить удаление</button>
+      <button type="button" class="btn btn-sm btn-outline-secondary admin-delete-cancel">Отмена</button>
+    </div>
+  </div>
 </form>
 {% else %}
 <form method="POST" action="{{ url_for('admin_delete_post_route', post_id=r.id) }}" onsubmit="return confirm('Удалить?')"><button class="btn btn-sm btn-danger" type="submit">Удалить</button></form>

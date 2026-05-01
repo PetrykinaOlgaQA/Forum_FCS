@@ -52,12 +52,18 @@
                 {% endif %}
                 <form method="POST" action="{{ url_for('delete_post', post_id=post.id) }}" class="d-inline-flex flex-wrap align-items-end gap-2" onsubmit="return confirm('Удалить пост и все комментарии?')">
                     {% if is_admin() and user.id != post.user_id %}
-                    <div class="flex-grow-1" style="min-width:200px;max-width:360px;">
+                    <button type="button" class="btn btn-sm btn-outline-danger admin-delete-reveal">Удалить пост</button>
+                    <div class="admin-delete-reason-panel flex-grow-1 d-flex flex-column gap-1" style="display:none;min-width:200px;max-width:360px;" data-display-open="flex">
                       <label class="form-label small text-danger mb-0">Причина удаления *</label>
-                      <textarea name="delete_reason" class="form-control form-control-sm" rows="2" required minlength="8" maxlength="2000" placeholder="Минимум 8 символов"></textarea>
+                      <textarea name="delete_reason" class="form-control form-control-sm" rows="2" minlength="8" maxlength="2000" placeholder="Минимум 8 символов"></textarea>
+                      <div class="d-flex flex-wrap gap-1">
+                        <button type="submit" class="btn btn-sm btn-danger">Подтвердить удаление</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary admin-delete-cancel">Отмена</button>
+                      </div>
                     </div>
-                    {% endif %}
+                    {% else %}
                     <button type="submit" class="btn btn-sm btn-outline-danger">{% if is_staff() and user.id != post.user_id %}Удалить (модерация){% else %}Удалить пост{% endif %}</button>
+                    {% endif %}
                 </form>
             </div>
         {% endif %}
@@ -83,9 +89,17 @@
                 {% elif is_staff() and user.id != c.user_id and not c.deleted_by_moderator %}
                 <form method="POST" action="{{ url_for('delete_comment', comment_id=c.id) }}" class="d-inline-flex flex-wrap align-items-end gap-1" onsubmit="return confirm('Удалить этот комментарий безвозвратно?');">
                     {% if is_admin() %}
-                    <textarea name="delete_reason" class="form-control form-control-sm" rows="1" style="min-width:180px;max-width:280px;" required minlength="8" maxlength="2000" placeholder="Причина удаления"></textarea>
-                    {% endif %}
+                    <button type="button" class="btn btn-sm btn-outline-danger admin-delete-reveal">Удалить коммент.</button>
+                    <div class="admin-delete-reason-panel d-flex flex-column gap-1" style="display:none;min-width:180px;max-width:280px;" data-display-open="flex">
+                      <textarea name="delete_reason" class="form-control form-control-sm" rows="2" minlength="8" maxlength="2000" placeholder="Причина удаления (мин. 8 символов)"></textarea>
+                      <div class="d-flex flex-wrap gap-1">
+                        <button type="submit" class="btn btn-sm btn-danger">Подтвердить удаление</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary admin-delete-cancel">Отмена</button>
+                      </div>
+                    </div>
+                    {% else %}
                     <button type="submit" class="btn btn-sm btn-outline-danger">Удалить коммент.</button>
+                    {% endif %}
                 </form>
                 {% endif %}
                 {% if user and not c.deleted_by_moderator %}

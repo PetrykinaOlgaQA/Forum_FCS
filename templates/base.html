@@ -902,6 +902,43 @@
             }
         });
     }
+
+    /* Причина удаления у админа: только после нажатия «Удалить пост/коммент.» */
+    document.addEventListener('click', function (e) {
+        var reveal = e.target.closest('.admin-delete-reveal');
+        if (reveal) {
+            e.preventDefault();
+            var form = reveal.closest('form');
+            if (!form) return;
+            var panel = form.querySelector('.admin-delete-reason-panel');
+            if (!panel) return;
+            panel.style.display = panel.dataset.displayOpen || 'flex';
+            reveal.style.display = 'none';
+            var ta = panel.querySelector('textarea[name="delete_reason"]');
+            if (ta) {
+                ta.required = true;
+                ta.focus();
+            }
+            return;
+        }
+        var cancel = e.target.closest('.admin-delete-cancel');
+        if (cancel) {
+            e.preventDefault();
+            var form = cancel.closest('form');
+            if (!form) return;
+            var panel = form.querySelector('.admin-delete-reason-panel');
+            var rev = form.querySelector('.admin-delete-reveal');
+            if (panel) {
+                panel.style.display = 'none';
+                var ta = panel.querySelector('textarea[name="delete_reason"]');
+                if (ta) {
+                    ta.required = false;
+                    ta.value = '';
+                }
+            }
+            if (rev) rev.style.display = '';
+        }
+    });
 </script>
 </body>
 </html>
