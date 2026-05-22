@@ -4,26 +4,30 @@ from .base import BaseRepository
 
 
 class CommentRepository(BaseRepository):
+    """Комментарии к постам, в том числе вложенные."""
+
     def get_by_post_id(self, post_id: int):
+        """Все комментарии поста; удалённые модератором показываются как заглушка."""
         return self.conn.execute(
             text(
                 """
-            SELECT c.id,
-                   CASE WHEN c.deleted_by_moderator
-                        THEN '[Сообщение удалено модератором]'
-                        ELSE c.content END AS content,
-                   c.created_date, u.username AS author, c.user_id,
-                   c.deleted_by_moderator, c.parent_id
-            FROM comments c
-            JOIN users u ON c.user_id = u.id
-            WHERE c.post_id = :id
-            ORDER BY c.created_date ASC
-        """
+                SELECT c.id,
+                       CASE WHEN c.deleted_by_moderator
+                            THEN '[Сообщение удалено модератором]'
+                            ELSE c.content END AS content,
+                       c.created_date, u.username AS author, c.user_id,
+                       c.deleted_by_moderator, c.parent_id
+                FROM comments c
+                JOIN users u ON c.user_id = u.id
+                WHERE c.post_id = :id
+                ORDER BY c.created_date ASC
+                """
             ),
             {"id": post_id},
         ).fetchall()
 
     def create(self, post_id: int, user_id: int, content: str, parent_id: int | None = None):
+        """Добавляет комментарий или ответ (parent_id)."""
         self.conn.execute(
             text(
                 """
@@ -40,6 +44,7 @@ class CommentRepository(BaseRepository):
         )
 
     def update(self, comment_id: int, content: str):
+        """Меняет текст комментария и сбрасывает флаг модераторского удаления."""
         self.conn.execute(
             text(
                 """
@@ -51,9 +56,11 @@ class CommentRepository(BaseRepository):
         )
 
     def delete(self, comment_id: int):
+        """Физически удаляет комментарий из БД."""
         self.conn.execute(text("DELETE FROM comments WHERE id = :id"), {"id": comment_id})
 
     def mark_deleted_by_moderator(self, comment_id: int):
+        """Помечает комментарий удалённым модератором без удаления строки."""
         self.conn.execute(
             text(
                 """
@@ -67,26 +74,29 @@ class CommentRepository(BaseRepository):
         )
 
     def get_by_id(self, comment_id: int):
+        """Одна запись комментария для редактирования или удаления."""
         return self.conn.execute(
             text(
                 """
-            SELECT c.id, c.content, c.created_date, c.user_id, c.post_id, c.deleted_by_moderator, c.parent_id
-            FROM comments c
-            WHERE c.id = :id
-        """
+                SELECT c.id, c.content, c.created_date, c.user_id, c.post_id,
+                       c.deleted_by_moderator, c.parent_id
+                FROM comments c
+                WHERE c.id = :id
+                """
             ),
             {"id": comment_id},
         ).fetchone()
 
     def get_by_user_id(self, user_id: int):
+        """Комментарии пользователя для профиля."""
         return self.conn.execute(
             text(
                 """
-            SELECT c.id, c.content, c.created_date, c.post_id
-            FROM comments c
-            WHERE c.user_id = :user_id
-            ORDER BY c.created_date DESC
-        """
+                SELECT c.id, c.content, c.created_date, c.post_id
+                FROM comments c
+                WHERE c.user_id = :user_id
+                ORDER BY c.created_date DESC
+                """
             ),
             {"user_id": user_id},
         ).fetchall()

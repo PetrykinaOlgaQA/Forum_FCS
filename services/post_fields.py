@@ -1,4 +1,3 @@
-"""Валидация полей товара/услуги: цена, Telegram, ссылка."""
 from __future__ import annotations
 
 import re
@@ -9,7 +8,7 @@ _TG_RE = re.compile(r"^@?[a-zA-Z][a-zA-Z0-9_]{4,31}$")
 
 
 def parse_price_rub(raw: str | None) -> tuple[int | None, str | None]:
-    """Возвращает (целое_рубли, сообщение_об_ошибке). Пустая строка — (None, None) если допускается снаружи."""
+    """Парсит цену в рублях: (число, None) или (None, текст ошибки). Пустая строка — (None, None)."""
     if raw is None or not str(raw).strip():
         return None, None
     s = str(raw).strip().replace(" ", "").replace("\u00a0", "")
@@ -24,7 +23,7 @@ def parse_price_rub(raw: str | None) -> tuple[int | None, str | None]:
 
 
 def validate_telegram_nick(raw: str | None) -> tuple[str | None, str | None]:
-    """Ник в Telegram: @username или username, 5–32 символа после опционального @."""
+    """Проверяет ник Telegram и нормализует к виду @nickname."""
     if raw is None or not str(raw).strip():
         return None, None
     s = str(raw).strip()
@@ -33,12 +32,11 @@ def validate_telegram_nick(raw: str | None) -> tuple[str | None, str | None]:
             None,
             "Некорректный ник Telegram: укажите @nickname или nickname (латиница, цифры, _, 5–32 символа).",
         )
-    if s.startswith("@"):
-        return s, None
-    return "@" + s, None
+    return (s, None) if s.startswith("@") else ("@" + s, None)
 
 
 def validate_http_url(raw: str | None) -> tuple[str | None, str | None]:
+    """Проверяет HTTP/HTTPS ссылку для поля контакта."""
     if raw is None or not str(raw).strip():
         return None, None
     s = str(raw).strip()

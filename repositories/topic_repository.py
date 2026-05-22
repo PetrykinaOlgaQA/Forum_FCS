@@ -1,18 +1,27 @@
-from .base import BaseRepository
 from sqlalchemy import text
 
+from .base import BaseRepository
+
+
 class TopicRepository(BaseRepository):
+    """Темы форума: создание, пары тем, удаление."""
+
     def get_by_title(self, title: str):
+        """Ищет тему по точному названию."""
         return self.conn.execute(
-            text("SELECT id FROM topics WHERE title = :title"), {"title": title}
+            text("SELECT id FROM topics WHERE title = :title"),
+            {"title": title},
         ).fetchone()
 
     def get_by_id(self, topic_id: int):
+        """Возвращает id и title темы."""
         return self.conn.execute(
-            text("SELECT id, title FROM topics WHERE id = :id"), {"id": topic_id}
+            text("SELECT id, title FROM topics WHERE id = :id"),
+            {"id": topic_id},
         ).fetchone()
 
-    def create(self, title: str, description: str, user_id: int):
+    def create(self, title: str, description: str, user_id: int) -> int | None:
+        """Создаёт тему и возвращает её id."""
         result = self.conn.execute(
             text(
                 """
@@ -23,17 +32,16 @@ class TopicRepository(BaseRepository):
             {"title": title, "description": description, "user_id": user_id},
         )
         row = result.fetchone()
-        if row:
-            try:
-                return row.id if hasattr(row, "id") else row[0]
-            except (AttributeError, IndexError):
-                return row[0] if len(row) > 0 else None
-        return None
+        if not row:
+            return None
+        return row.id if hasattr(row, "id") else row[0]
 
     def get_all(self):
+        """Все темы для выпадающего списка при создании поста."""
         return self.conn.execute(text("SELECT id, title FROM topics")).fetchall()
 
     def list_pairs(self):
+        """Связанные пары тем (paired_topic_id)."""
         return self.conn.execute(
             text(
                 """
@@ -47,6 +55,7 @@ class TopicRepository(BaseRepository):
         ).fetchall()
 
     def list_with_stats(self, limit: int = 500):
+        """Темы с автором и числом постов для админки."""
         return self.conn.execute(
             text(
                 """
@@ -62,4 +71,5 @@ class TopicRepository(BaseRepository):
         ).fetchall()
 
     def delete(self, topic_id: int):
+        """Удаляет тему (каскад по FK в БД)."""
         self.conn.execute(text("DELETE FROM topics WHERE id = :id"), {"id": topic_id})

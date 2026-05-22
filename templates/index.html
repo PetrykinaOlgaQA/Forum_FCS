@@ -64,7 +64,7 @@
       <div class="card mb-3 post-card border-0 shadow-sm">
         <div class="card-body">
           <div class="d-flex flex-wrap gap-2 mb-2">
-            <span class="badge bg-primary">{{ p.topic_title }}</span>
+            <span class="badge bg-primary">{{ p.topic_title | highlight_search(search_query) }}</span>
             {% if p.post_type == 'good' %}
             <span class="badge bg-success">Товар</span>
             {% elif p.post_type == 'service' %}
@@ -80,9 +80,9 @@
             <img src="{{ url_for('static', filename=pm.get('good_photo')) }}" alt="" class="rounded border" style="max-height: 140px; width: auto;">
           </div>
           {% endif %}
-          <p class="mb-2">{{ p.content | truncate(280) }}</p>
+          <p class="mb-2">{{ p.content | truncate(280) | highlight_search(search_query) }}</p>
           <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
-            <small class="text-muted">{{ p.author }} • {{ p.created_date.strftime('%d.%m.%Y %H:%M') }} • 💬 {{ p.comment_count }}</small>
+            <small class="text-muted">{{ p.author | highlight_search(search_query) }} • {{ p.created_date.strftime('%d.%m.%Y %H:%M') }} • 💬 {{ p.comment_count }}</small>
             <div class="d-flex align-items-center gap-2 flex-wrap">
               {% if user %}
               <button type="button"
