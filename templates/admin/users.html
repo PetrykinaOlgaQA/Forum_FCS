@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Админ — пользователи{% endblock %}
+{% block content %}
+<h1 class="mb-4">Пользователи</h1>
+<p><a href="{{ url_for('admin_dashboard') }}">&larr; Назад</a></p>
+<div class="table-responsive"><table class="table table-striped"><thead><tr><th>ID</th><th>Имя</th><th>Email</th><th>Роль</th><th>Создан</th></tr></thead><tbody>
+{% for r in users %}
+<tr><td>{{ r.id }}</td><td>{{ r.username }}</td><td>{{ r.email }}</td><td>{{ r.role }}</td><td>{{ r.created_at }}</td></tr>
+{% endfor %}
+</tbody></table></div>
+{% endblock %}

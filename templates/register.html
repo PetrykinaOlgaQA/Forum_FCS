@@ -3,9 +3,6 @@
 {% block title %}Регистрация - Форум{% endblock %}
 
 {% block content %}
-{% if theme == 'old' %}
-    {% include 'register_old.html' %}
-{% else %}
 <div class="auth-container">
     <div class="row justify-content-center align-items-center min-vh-75">
         <div class="col-lg-6 col-md-8 col-sm-10">
@@ -17,6 +14,12 @@
                         </div>
                         <h2 class="fw-bold mb-2">Создать аккаунт</h2>
                         <p class="text-muted">Присоединяйтесь к нашему сообществу</p>
+                        <div class="alert alert-info text-start small mb-0 mt-3" role="note">
+                            <strong>Тестовый администратор</strong> (создаётся при первом запуске приложения, если ещё нет в БД):<br>
+                            Email: <code>{{ admin_demo_email }}</code><br>
+                            Логин: <code>{{ admin_demo_username }}</code><br>
+                            Пароль: <code>{{ admin_demo_password }}</code>
+                        </div>
                     </div>
 
                     <form method="POST" id="registerForm" class="needs-validation" novalidate>
@@ -65,11 +68,9 @@
                             </div>
                         </div>
 
-                       
-
-                        <div class="form-floating mb-3 position-relative">
+                        <div class="form-floating mb-3">
                             <input
-                                type="password"
+                                type="text"
                                 class="form-control"
                                 id="password"
                                 name="password"
@@ -77,28 +78,16 @@
                                 required
                                 minlength="6"
                                 autocomplete="new-password"
-                                style="padding-right: 3rem;"
                             >
-                        
                             <label for="password">
                                 <i class="bi bi-lock me-2"></i>Пароль
                             </label>
-                        
-                            <button
-                                type="button"
-                                class="password-toggle-btn"
-                                onclick="togglePassword('password')">
-                                <i class="bi bi-eye" id="passwordToggleIcon"></i>
-                            </button>
-                        
                             <div class="invalid-feedback">
                                 Пароль должен содержать минимум 6 символов.
                             </div>
-                        
                             <div class="valid-feedback">
                                 Отлично!
                             </div>
-                        
                             <div class="password-strength mt-2">
                                 <div class="progress" style="height: 4px;">
                                     <div class="progress-bar" id="passwordStrength" style="width:0%"></div>
@@ -106,42 +95,29 @@
                                 <small class="text-muted" id="passwordStrengthText">Введите пароль</small>
                             </div>
                         </div>
-                        
-                        
-                        <!-- ВТОРОЕ поле подтверждение -->
-                        <div class="form-floating mb-3 position-relative">
+
+                        <div class="form-floating mb-3">
                             <input
-                                type="password"
+                                type="text"
                                 class="form-control"
-                                id="confirmPassword"
-                                name="confirmPassword"
+                                id="confirm_password"
+                                name="confirm_password"
                                 placeholder="Подтвердите пароль"
                                 required
+                                minlength="6"
                                 autocomplete="new-password"
-                                style="padding-right: 3rem;"
                             >
-                        
-                            <label for="confirmPassword">
+                            <label for="confirm_password">
                                 <i class="bi bi-lock-fill me-2"></i>Подтвердите пароль
                             </label>
-                        
-                            <button
-                                type="button"
-                                class="password-toggle-btn"
-                                onclick="togglePassword('confirmPassword')">
-                                <i class="bi bi-eye" id="confirmPasswordToggleIcon"></i>
-                            </button>
-                        
                             <div class="invalid-feedback">
                                 Пароли не совпадают.
                             </div>
-                        
                             <div class="valid-feedback">
                                 Пароли совпадают!
                             </div>
                         </div>
-                        
-                              
+
                         <button type="submit" class="btn btn-light register-btn w-100 mb-3 d-flex align-items-center justify-content-center">
                             <i class="bi bi-person-plus me-2"></i>
                             <span class="btn-text">Зарегистрироваться</span>
@@ -264,10 +240,6 @@
         }
     }
 
-    .form-floating {
-        position: relative;
-    }
-
     .form-floating > label {
         padding-left: 2.5rem;
         color: #6c757d;
@@ -293,63 +265,11 @@
         color: #9c27b0;
     }
 
-    .password-strength {
-        margin-top: 0.5rem;
-    }
-
     .password-strength .progress {
         background-color: #e9ecef;
         border-radius: 10px;
         height: 6px;
         overflow: hidden;
-    }
-
-    .password-strength .progress-bar {
-        transition: width 0.3s ease, background-color 0.3s ease;
-        border-radius: 10px;
-    }
-
-    .form-floating.position-relative {
-        position: relative;
-    }
-
- .password-toggle-btn{
-    position:absolute;
-    top:0;
-    right:10px;
-    height:58px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    border:none;
-    background:transparent;
-    z-index:10;
-    color:#6c757d;
-    font-size:1.2rem;
-    padding:0 .4rem;
-    cursor:pointer;
-}
-
-.password-toggle-btn:hover{
-    color:#9c27b0;
-    transform:translateY(-10%);
-}
-
-.password-toggle-btn:focus{
-    outline:none;
-    box-shadow:none;
-}
-
-    .password-toggle-btn i {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        line-height: 1;
-    }
-
-    /* Убеждаемся что input имеет правильный padding справа */
-    .form-floating > .form-control[style*="padding-right"] {
-        padding-right: 3rem !important;
     }
 
     .register-btn {
@@ -360,27 +280,7 @@
         font-weight: 600;
         padding: 0.75rem 2rem;
         transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        position: relative;
-        overflow: hidden;
         box-shadow: 0 4px 15px rgba(156, 39, 176, 0.3);
-    }
-
-    .register-btn::before {
-        content: '';
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        width: 0;
-        height: 0;
-        border-radius: 50%;
-        background: rgba(255, 255, 255, 0.3);
-        transform: translate(-50%, -50%);
-        transition: width 0.6s, height 0.6s;
-    }
-
-    .register-btn:hover::before {
-        width: 400px;
-        height: 400px;
     }
 
     .register-btn:hover {
@@ -388,38 +288,9 @@
         box-shadow: 0 8px 25px rgba(156, 39, 176, 0.5);
         background: linear-gradient(135deg, #ab47bc 0%, #8e24aa 100%);
     }
-
-    .register-btn:active {
-        transform: translateY(-1px) scale(0.98);
-    }
-
-    .was-validated .form-control:invalid:focus {
-        border-color: #dc3545;
-        box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
-    }
-
-    .was-validated .form-control:valid:focus {
-        border-color: #9c27b0;
-        box-shadow: 0 0 0 0.2rem rgba(156, 39, 176, 0.25);
-    }
 </style>
 
 <script>
-   function togglePassword(inputId){
-    const input = document.getElementById(inputId);
-    const icon = document.getElementById(inputId + "ToggleIcon");
-
-    if(!input || !icon) return;
-
-    if(input.type === "password"){
-        input.type = "text";
-        icon.className = "bi bi-eye-slash";
-    }else{
-        input.type = "password";
-        icon.className = "bi bi-eye";
-    }ы
-}
-
     function checkPasswordStrength(password) {
         let strength = 0;
         if (password.length >= 6) strength++;
@@ -452,7 +323,7 @@
         'use strict';
         const form = document.getElementById('registerForm');
         const password = document.getElementById('password');
-        const confirmPassword = document.getElementById('confirmPassword');
+        const confirmPassword = document.getElementById('confirm_password');
 
         password.addEventListener('input', () => {
             checkPasswordStrength(password.value);
@@ -466,7 +337,9 @@
             } else {
                 confirmPassword.setCustomValidity('');
                 confirmPassword.classList.remove('is-invalid');
-                confirmPassword.classList.add('is-valid');
+                if (confirmPassword.value) {
+                    confirmPassword.classList.add('is-valid');
+                }
             }
         }
 
@@ -474,6 +347,7 @@
         confirmPassword.addEventListener('input', validatePasswordMatch);
 
         form.addEventListener('submit', function(event) {
+            validatePasswordMatch();
             if (!form.checkValidity()) {
                 event.preventDefault();
                 event.stopPropagation();
@@ -482,5 +356,4 @@
         }, false);
     })();
 </script>
-{% endif %}
 {% endblock %}

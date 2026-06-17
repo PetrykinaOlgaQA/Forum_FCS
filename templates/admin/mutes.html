@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Активные муты{% endblock %}
+{% block content %}
+<h1 class="h4 mb-3">Ограничения за мат (посты и комментарии)</h1>
+<p class="text-muted small mb-4">Пользователи с действующим <code>content_ban_until</code> в будущем. Только администратор может снять ограничение.</p>
+<p class="mb-3"><a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-secondary btn-sm">← Админ-панель</a></p>
+
+{% if not rows %}
+<div class="alert alert-info">Сейчас никто не в муте.</div>
+{% else %}
+<div class="table-responsive card">
+  <table class="table table-hover mb-0">
+    <thead class="table-light">
+      <tr>
+        <th>ID</th>
+        <th>Логин</th>
+        <th>Email</th>
+        <th>До (сервер)</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in rows %}
+      <tr>
+        <td>{{ r.id }}</td>
+        <td>{{ r.username }}</td>
+        <td class="small">{{ r.email }}</td>
+        <td class="text-nowrap small">{{ r.content_ban_until.strftime('%d.%m.%Y %H:%M:%S') if r.content_ban_until else '—' }}</td>
+        <td>
+          <form method="post" action="{{ url_for('admin_clear_mute', user_id=r.id) }}" class="d-inline" onsubmit="return confirm('Снять мут с {{ r.username }}?');">
+            <button type="submit" class="btn btn-sm btn-success">Разбанить</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+{% endblock %}

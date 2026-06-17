@@ -1,0 +1,111 @@
+{# Главная: сразу после мата (модалка) или всё время активного мута на посты/комментарии #}
+{% if show_profanity_modal or is_content_muted %}
+<aside class="profanity-shame-banner card mb-4 overflow-hidden" role="alert" aria-label="Ограничение за нецензурную лексику">
+  <div class="profanity-shame-inner row g-0 align-items-stretch flex-nowrap">
+    <div class="col-auto flex-shrink-0 profanity-shame-visual">
+      <img
+        src="{{ url_for('static', filename='img/profanity-shame.png') }}"
+        class="profanity-shame-img h-100"
+        alt=""
+        width="220"
+        height="180"
+        loading="eager"
+        decoding="async"
+      >
+    </div>
+    <div class="col min-width-0">
+      <div class="card-body py-3 px-3 profanity-shame-copy">
+        <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+          <span class="badge profanity-shame-badge">Баннер позора</span>
+          <span class="profanity-shame-tag small text-uppercase">Осуждение</span>
+        </div>
+        {% if show_profanity_modal %}
+        <p class="mb-1 fw-semibold profanity-shame-title">Так-так… нецензурная лексика здесь не пройдёт.</p>
+        <p class="small mb-0 profanity-shame-muted">Сообщение не сохранено. Подумай о культуре речи в сообществе ФКН.</p>
+        {% endif %}
+        {% if is_content_muted and content_mute_until_display %}
+        <p class="mb-1 fw-semibold profanity-shame-title {% if show_profanity_modal %}mt-2{% endif %}">У тебя действует ограничение на посты и комментарии.</p>
+        <p class="small mb-0 profanity-shame-muted">Снимется не раньше: <strong class="profanity-shame-strong">{{ content_mute_until_display }}</strong></p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</aside>
+<style>
+  .profanity-shame-banner {
+    border: 1px solid rgba(220, 53, 69, 0.35);
+    border-radius: 16px;
+    background: linear-gradient(118deg, #fff5f7 0%, #ffffff 38%, #faf8ff 100%);
+    box-shadow: 0 10px 40px rgba(156, 39, 176, 0.12), 0 0 0 1px rgba(255, 255, 255, 0.8) inset;
+    animation: shameBannerIn 0.45s ease-out;
+  }
+  .profanity-shame-inner { min-height: 140px; }
+  .profanity-shame-visual {
+    background: linear-gradient(180deg, rgba(255,255,255,0.9) 0%, #fce4ec 100%);
+  }
+  .profanity-shame-img {
+    width: clamp(140px, 28vw, 220px);
+    object-fit: cover;
+    object-position: center top;
+    min-height: 140px;
+    display: block;
+  }
+  .profanity-shame-badge {
+    background: linear-gradient(135deg, #dc3545, #c2185b) !important;
+    color: #fff !important;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+  .profanity-shame-tag { color: #c2185b; font-weight: 700; letter-spacing: 0.08em; }
+  .profanity-shame-title { color: #4a148c; }
+  .profanity-shame-muted { color: #6a4f7a !important; }
+  .profanity-shame-strong { color: #880e4f; }
+  @keyframes shameBannerIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Тёмная тема: «неоновая» плашка */
+  body.dark-mode .profanity-shame-banner {
+    border: 1px solid rgba(255, 107, 138, 0.45);
+    background:
+      radial-gradient(ellipse 120% 80% at 20% 0%, rgba(255, 77, 136, 0.18) 0%, transparent 55%),
+      linear-gradient(145deg, #0a050d 0%, #150a1c 35%, #0d0614 70%, #12081a 100%);
+    box-shadow:
+      0 0 0 1px rgba(186, 104, 200, 0.25) inset,
+      0 0 32px rgba(255, 64, 129, 0.12),
+      0 16px 48px rgba(0, 0, 0, 0.55);
+  }
+  body.dark-mode .profanity-shame-visual {
+    background: linear-gradient(180deg, rgba(40, 20, 48, 0.95) 0%, #12081a 100%);
+    box-shadow: inset -1px 0 0 rgba(255, 107, 138, 0.15);
+  }
+  body.dark-mode .profanity-shame-img {
+    filter: saturate(1.08) contrast(1.05) brightness(0.92);
+    box-shadow: inset 0 0 24px rgba(0, 0, 0, 0.35);
+  }
+  body.dark-mode .profanity-shame-copy {
+    background: transparent;
+  }
+  body.dark-mode .profanity-shame-badge {
+    background: transparent !important;
+    color: #ff8da1 !important;
+    border: 1px solid rgba(255, 141, 161, 0.75) !important;
+    box-shadow: 0 0 18px rgba(255, 77, 136, 0.25);
+  }
+  body.dark-mode .profanity-shame-tag {
+    color: #e1bee7 !important;
+    text-shadow: 0 0 12px rgba(186, 104, 200, 0.5);
+  }
+  body.dark-mode .profanity-shame-title {
+    color: #f3e5f5 !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+  }
+  body.dark-mode .profanity-shame-muted {
+    color: #b39ddb !important;
+  }
+  body.dark-mode .profanity-shame-strong {
+    color: #ffccbc !important;
+  }
+</style>
+{% endif %}

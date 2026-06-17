@@ -1,6 +1,10 @@
 venv/
 __pycache__/
 *.pyc
+.pytest_cache/
 .env
 .idea/
 templates/new/
+
+# Локальное описание работы (не в репозиторий)
+ИСТОРИЯ_РАБОТ.md

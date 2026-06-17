@@ -5,10 +5,11 @@ CREATE TABLE users (
     id              SERIAL PRIMARY KEY,
     username        VARCHAR(50) NOT NULL UNIQUE,
     email           VARCHAR(255) NOT NULL UNIQUE,
-    password        VARCHAR(255) NOT NULL,
+    password        VARCHAR(512) NOT NULL,
     role            VARCHAR(20) NOT NULL DEFAULT 'user'
-        CHECK (role IN ('user', 'moderator')),
-    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        CHECK (role IN ('user', 'moderator', 'admin')),
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    content_ban_until TIMESTAMPTZ
 );
 
 CREATE TABLE topics (
@@ -41,6 +42,7 @@ CREATE TABLE comments (
     id                    SERIAL PRIMARY KEY,
     post_id               INTEGER NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
     user_id               INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    parent_id             INTEGER REFERENCES comments(id) ON DELETE CASCADE,
     content               TEXT NOT NULL,
     created_date          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     deleted_by_moderator  BOOLEAN NOT NULL DEFAULT FALSE
@@ -57,6 +59,22 @@ CREATE TABLE post_reactions (
 );
 
 CREATE INDEX idx_post_reactions_post ON post_reactions(post_id);
+
+CREATE TABLE moderation_log (
+    id              SERIAL PRIMARY KEY,
+    actor_id        INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    action          VARCHAR(64) NOT NULL,
+    target_type     VARCHAR(32) NOT NULL,
+    target_id       INTEGER NOT NULL,
+    reason          TEXT NOT NULL,
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_moderation_log_created ON moderation_log(created_at DESC);
+
+CREATE INDEX idx_posts_fts ON posts USING GIN (to_tsvector('simple', coalesce(content, '')));
+CREATE INDEX idx_topics_fts ON topics USING GIN (to_tsvector('simple', coalesce(title, '')));
+CREATE INDEX idx_users_fts ON users USING GIN (to_tsvector('simple', coalesce(username, '')));
 
 COMMENT ON TABLE topics IS 'Тематические разделы; paired_topic_id — связка «тема–пара» для перекрёстных обсуждений.';
 COMMENT ON COLUMN posts.post_type IS 'post — обсуждение, good — объявление о продаже, service — услуга.';
